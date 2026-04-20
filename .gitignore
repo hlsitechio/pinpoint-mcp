@@ -34,8 +34,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Clawmark runtime output
-clawmark-output/
+# Pinpoint runtime output
+pinpoint-output/
 *.screenshot.png
 
 # Playwright browsers cache (if ever installed locally)

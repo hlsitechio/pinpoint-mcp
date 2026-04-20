@@ -1,4 +1,4 @@
-# clawmark-mcp
+# pinpoint-mcp
 
 > MCP server for screenshot capture + intelligent visual annotation. Built for Claude Desktop, Claude Code, and any MCP-compatible client.
 
@@ -15,7 +15,7 @@
                        │ MCP stdio
                        ▼
 ┌─────────────────────────────────────────────────────┐
-│  clawmark-mcp                                       │
+│  pinpoint-mcp                                       │
 │  ├── capture/                                       │
 │  │   ├── screen.py   → mss (Windows/Linux/macOS)   │
 │  │   └── web.py      → Playwright (CDP)            │
@@ -58,11 +58,11 @@ playwright install chromium
 ```json
 {
   "mcpServers": {
-    "clawmark": {
+    "pinpoint": {
       "command": "python",
-      "args": ["-m", "clawmark.server"],
+      "args": ["-m", "pinpoint.server"],
       "env": {
-        "CLAWMARK_WORKDIR": "C:\\Users\\Hubert\\clawmark-output"
+        "PINPOINT_WORKDIR": "C:\\Users\\Hubert\\pinpoint-output"
       }
     }
   }
@@ -75,14 +75,14 @@ Redémarre Claude Desktop. Le serveur apparaît dans la liste des MCP.
 
 | Tool | Description |
 |------|-------------|
-| `clawmark_list_monitors` | Liste les écrans disponibles |
-| `clawmark_capture_screen` | Screenshot écran complet |
-| `clawmark_capture_active_window` | Screenshot fenêtre active (Windows) |
-| `clawmark_capture_url` | Screenshot d'une page web |
-| `clawmark_find_text` | Trouve du texte par OCR |
-| `clawmark_find_web_element` | Trouve un élément DOM (sélecteurs Playwright) |
-| `clawmark_annotate` | Applique encadrés/flèches/numéros |
-| `clawmark_show_me` | **★ Workflow complet en 1 call** |
+| `pinpoint_list_monitors` | Liste les écrans disponibles |
+| `pinpoint_capture_screen` | Screenshot écran complet |
+| `pinpoint_capture_active_window` | Screenshot fenêtre active (Windows) |
+| `pinpoint_capture_url` | Screenshot d'une page web |
+| `pinpoint_find_text` | Trouve du texte par OCR |
+| `pinpoint_find_web_element` | Trouve un élément DOM (sélecteurs Playwright) |
+| `pinpoint_annotate` | Applique encadrés/flèches/numéros |
+| `pinpoint_show_me` | **★ Workflow complet en 1 call** |
 
 ## Exemple d'utilisation avec Claude
 
@@ -90,7 +90,7 @@ Redémarre Claude Desktop. Le serveur apparaît dans la liste des MCP.
 
 > **Claude** :
 > ```
-> [appelle clawmark_show_me(target="Approve scopes",
+> [appelle pinpoint_show_me(target="Approve scopes",
 >                           source="C:/screenshots/shopify.png")]
 > ```
 > Voici l'image annotée — le bouton à cliquer est encadré en rouge.
@@ -99,19 +99,19 @@ Redémarre Claude Desktop. Le serveur apparaît dans la liste des MCP.
 
 | Variable | Défaut | Description |
 |----------|--------|-------------|
-| `CLAWMARK_WORKDIR` | `%TEMP%/clawmark` | Dossier de sortie des PNG |
-| `CLAWMARK_TRANSPORT` | `stdio` | `stdio` ou `http` |
-| `CLAWMARK_PORT` | `8765` | Port HTTP si transport=http |
+| `PINPOINT_WORKDIR` | `%TEMP%/pinpoint` | Dossier de sortie des PNG |
+| `PINPOINT_TRANSPORT` | `stdio` | `stdio` ou `http` |
+| `PINPOINT_PORT` | `8765` | Port HTTP si transport=http |
 
 ## Tests rapides
 
 ```bash
 # Vérifier que Tesseract trouve "Approve scopes" dans une image
-python -c "from clawmark.detect.ocr import OCRDetector; \
+python -c "from pinpoint.detect.ocr import OCRDetector; \
            print(OCRDetector().find_text('test.png', 'Approve scopes'))"
 
 # Lister les écrans
-python -c "from clawmark.capture.screen import ScreenCapture; \
+python -c "from pinpoint.capture.screen import ScreenCapture; \
            [print(m.label) for m in ScreenCapture().list_monitors()]"
 ```
 

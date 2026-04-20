@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "clawmark": {
+    "pinpoint": {
       "command": "python",
-      "args": ["-m", "clawmark.server"],
+      "args": ["-m", "pinpoint.server"],
       "env": {
-        "CLAWMARK_WORKDIR": "C:\\Users\\Hubert\\Documents\\clawmark-output",
+        "PINPOINT_WORKDIR": "C:\\Users\\Hubert\\Documents\\pinpoint-output",
         "PYTHONIOENCODING": "utf-8"
       }
     }
