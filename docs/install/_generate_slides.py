@@ -202,6 +202,40 @@ def _draw_json_line(draw: ImageDraw.ImageDraw, line: str, x: int, y: int):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Annotation overlay (pinpoint-style: red rect + arrow)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def overlay_annotation(img_path: Path, rect: tuple[int, int, int, int],
+                        arrow_from: tuple[int, int], arrow_to: tuple[int, int],
+                        color: tuple[int, int, int] = (255, 23, 68)) -> None:
+    """Draw a pinpoint-style red rect + arrow on an already-saved image."""
+    img = Image.open(img_path).convert("RGBA")
+    draw = ImageDraw.Draw(img)
+    x, y, w, h = rect
+    # rectangle (3 px stroke)
+    for off in range(3):
+        draw.rectangle([(x - off, y - off), (x + w + off, y + h + off)], outline=color)
+    # arrow line
+    draw.line([arrow_from, arrow_to], fill=color, width=3)
+    # arrow head
+    _draw_arrow_head(draw, arrow_from, arrow_to, color)
+    img.convert("RGB").save(img_path)
+
+
+def _draw_arrow_head(draw, p1, p2, color):
+    import math
+    angle = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+    head_len = 12
+    head_w = 7
+    x2, y2 = p2
+    hx1 = x2 - head_len * math.cos(angle) + head_w * math.sin(angle)
+    hy1 = y2 - head_len * math.sin(angle) - head_w * math.cos(angle)
+    hx2 = x2 - head_len * math.cos(angle) - head_w * math.sin(angle)
+    hy2 = y2 - head_len * math.sin(angle) + head_w * math.cos(angle)
+    draw.polygon([(x2, y2), (hx1, hy1), (hx2, hy2)], fill=color)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Slides
 # ──────────────────────────────────────────────────────────────────────────────
 

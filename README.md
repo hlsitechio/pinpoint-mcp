@@ -8,24 +8,24 @@
 
 ## Demo
 
-*"Show me where to sign in on YouTube."*
+*"Find every Sign-in button on YouTube."*
 
 <p align="center">
-  <img src="docs/demo/hero_youtube_signin.png" alt="YouTube homepage with a red box and arrow pointing at the Sign in button" width="860">
+  <img src="docs/demo/hero_youtube_signin.png" alt="YouTube homepage with red boxes and arrows pointing at both Sign in buttons" width="860">
 </p>
 
-One call:
+Two calls:
 
 ```python
-pinpoint_show_me(
-    source="https://www.youtube.com",
-    target="Sign in",
-)
+image = pinpoint_capture_url(url="https://www.youtube.com")
+matches = pinpoint_find_text(image_path=image, query="Sign in")
+# → [(1365, 19, 42, 17), (72, 360, 42, 14)]  ← both buttons found
 ```
 
-Pinpoint loaded the page in headless Chromium, matched the DOM selector
-`text=Sign in`, and returned the annotated PNG above — red box + arrow on
-the exact click target, top-right of the page.
+Pinpoint loaded the page in headless Chromium, ran Tesseract OCR, and
+returned every match — top-right header button **and** the sidebar
+call-to-action. Same call with `detection_method="dom"` on
+`pinpoint_show_me` gets pixel-perfect Playwright selectors instead of OCR.
 
 **👉 Live install walkthrough: [hlsitechio.github.io/pinpoint-mcp/install.html](https://hlsitechio.github.io/pinpoint-mcp/install.html)**
 

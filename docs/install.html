@@ -201,7 +201,7 @@
 <body>
   <div class="hero">
     <h1><span class="brand">pinpoint-mcp</span> · Install walkthrough</h1>
-    <p>Six screens, zero guesswork — from Tesseract download to Claude Desktop confirming the server is live.</p>
+    <p>Seven screens, zero guesswork — from Tesseract download to Claude Desktop confirming the server is live. Every slide was annotated by pinpoint itself.</p>
   </div>
 
   <div class="stage" id="stage">
@@ -217,50 +217,60 @@
 
     <!-- Slide 2 -->
     <div class="slide" data-step="2">
-      <img src="install/slide_02_clone.png" alt="PowerShell cloning the pinpoint-mcp repository">
-      <span class="badge">Step 1 · Clone</span>
+      <img src="install/slide_02_github.png" alt="pinpoint-mcp GitHub repository page with the green Code button highlighted">
+      <span class="badge">Step 1 · Get it</span>
       <div class="caption">
-        <h2>2. Clone the repository</h2>
-        <p><code>git clone https://github.com/hlsitechio/pinpoint-mcp.git</code> then <code>cd</code> into the checkout. ~35 objects, ~13 KiB — takes under a second on any connection.</p>
+        <h2>2. Open the repo on GitHub</h2>
+        <p>Head to <code>github.com/hlsitechio/pinpoint-mcp</code>. Click the green <code>Code</code> button to copy the HTTPS clone URL — that's what you'll paste into <code>git clone</code> on the next slide.</p>
       </div>
     </div>
 
     <!-- Slide 3 -->
     <div class="slide" data-step="3">
-      <img src="install/slide_03_pip.png" alt="pip install -e output ending in Successfully installed pinpoint-mcp-0.1.0">
-      <span class="badge">Step 2 · Install</span>
+      <img src="install/slide_03_clone.png" alt="PowerShell cloning the pinpoint-mcp repository">
+      <span class="badge">Step 2 · Clone</span>
       <div class="caption">
-        <h2>3. Install the package (editable)</h2>
-        <p><code>pip install -e .</code> pulls FastMCP, Pillow, mss, Playwright, pytesseract and pydantic — then registers <code>pinpoint-mcp</code> as an editable wheel so source edits reload without reinstalling.</p>
+        <h2>3. Clone the repository</h2>
+        <p><code>git clone https://github.com/hlsitechio/pinpoint-mcp.git</code> then <code>cd</code> into the checkout. ~35 objects, ~13 KiB — takes under a second on any connection.</p>
       </div>
     </div>
 
     <!-- Slide 4 -->
     <div class="slide" data-step="4">
-      <img src="install/slide_04_playwright.png" alt="playwright install chromium downloading ~170 MB">
-      <span class="badge">Step 3 · Browser</span>
+      <img src="install/slide_04_pip.png" alt="pip install -e output ending in Successfully installed pinpoint-mcp-0.1.0">
+      <span class="badge">Step 3 · Install</span>
       <div class="caption">
-        <h2>4. Install the Playwright browser</h2>
-        <p><code>playwright install chromium</code> fetches a self-contained Chromium build and the bundled <code>ffmpeg</code>. Required for <code>pinpoint_capture_url</code> and the DOM-based <code>pinpoint_find_web_element</code>.</p>
+        <h2>4. Install the package (editable)</h2>
+        <p><code>pip install -e .</code> pulls FastMCP, Pillow, mss, Playwright, pytesseract and pydantic — then registers <code>pinpoint-mcp</code> as an editable wheel so source edits reload without reinstalling.</p>
       </div>
     </div>
 
     <!-- Slide 5 -->
     <div class="slide" data-step="5">
-      <img src="install/slide_05_config.png" alt="claude_desktop_config.json showing the pinpoint MCP server entry">
-      <span class="badge">Step 4 · Configure</span>
+      <img src="install/slide_05_playwright.png" alt="playwright install chromium downloading ~170 MB">
+      <span class="badge">Step 4 · Browser</span>
       <div class="caption">
-        <h2>5. Register the MCP server</h2>
-        <p>Add a <code>pinpoint</code> entry to <code>%APPDATA%\Claude\claude_desktop_config.json</code> pointing at <code>python -m pinpoint.server</code>. Set <code>TESSDATA_PREFIX</code> + <code>PATH</code> so Tesseract and its language packs are reachable from the spawned subprocess.</p>
+        <h2>5. Install the Playwright browser</h2>
+        <p><code>playwright install chromium</code> fetches a self-contained Chromium build and the bundled <code>ffmpeg</code>. Required for <code>pinpoint_capture_url</code> and the DOM-based <code>pinpoint_find_web_element</code>.</p>
       </div>
     </div>
 
     <!-- Slide 6 -->
     <div class="slide" data-step="6">
-      <img src="install/slide_06_verify.png" alt="Claude Desktop successfully calling pinpoint_list_monitors">
+      <img src="install/slide_06_config.png" alt="claude_desktop_config.json showing the pinpoint MCP server entry">
+      <span class="badge">Step 5 · Configure</span>
+      <div class="caption">
+        <h2>6. Register the MCP server</h2>
+        <p>Add a <code>pinpoint</code> entry to <code>%APPDATA%\Claude\claude_desktop_config.json</code> pointing at <code>python -m pinpoint.server</code>. Set <code>TESSDATA_PREFIX</code> + <code>PATH</code> so Tesseract and its language packs are reachable from the spawned subprocess.</p>
+      </div>
+    </div>
+
+    <!-- Slide 7 -->
+    <div class="slide" data-step="7">
+      <img src="install/slide_07_verify.png" alt="Claude Desktop successfully calling pinpoint_list_monitors">
       <span class="badge">Done</span>
       <div class="caption">
-        <h2>6. Verify in Claude Desktop</h2>
+        <h2>7. Verify in Claude Desktop</h2>
         <p>Fully quit Claude Desktop (tray icon → Quit), then relaunch. Ask Claude to call <code>pinpoint_list_monitors</code> — a successful JSON response like the one above means all 9 <code>pinpoint_*</code> tools are wired up and ready.</p>
       </div>
     </div>
