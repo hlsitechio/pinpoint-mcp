@@ -236,15 +236,19 @@ def _draw_arrow_head(draw, p1, p2, color):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Slides
+# Slides (username-redacted: uses "YOU" instead of the author's login)
+# Slide 01 = Tesseract prereq (web capture, annotated externally)
+# Slide 02 = GitHub repo page (web capture, annotated externally)
+# Slides 03-07 generated below + annotated via overlay_annotation().
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Slide 2: Clone
+# Slide 03: Clone
+slide_clone = OUT / "slide_03_clone.png"
 make_terminal(
     "Windows PowerShell",
     [
-        ("comment", "# 1 - Clone the repo"),
-        ("prompt+cmd", r"PS C:\Users\hlaro\pinpoint-install-demo>||git clone https://github.com/hlsitechio/pinpoint-mcp.git"),
+        ("comment", "# 1 - Clone the repo, then move into the checkout"),
+        ("prompt+cmd", r"PS C:\Users\YOU\pinpoint-install-demo>||git clone https://github.com/hlsitechio/pinpoint-mcp.git"),
         ("output",  "Cloning into 'pinpoint-mcp'..."),
         ("output",  "remote: Enumerating objects: 35, done."),
         ("output",  "remote: Counting objects: 100% (35/35), done."),
@@ -253,19 +257,27 @@ make_terminal(
         ("output",  "Receiving objects: 100% (35/35), 12.34 KiB | 2.00 MiB/s, done."),
         ("success", "Resolving deltas: 100% (6/6), done."),
         ("blank", ""),
-        ("prompt+cmd", r"PS C:\Users\hlaro\pinpoint-install-demo>||cd pinpoint-mcp"),
-        ("prompt+cmd", r"PS C:\Users\hlaro\pinpoint-install-demo\pinpoint-mcp>||"),
+        ("prompt+cmd", r"PS C:\Users\YOU\pinpoint-install-demo>||cd pinpoint-mcp"),
+        ("prompt+cmd", r"PS C:\Users\YOU\pinpoint-install-demo\pinpoint-mcp>||"),
     ],
-    OUT / "slide_02_clone.png",
+    slide_clone,
 )
+# Dual annotation: both commands matter (clone + cd into checkout)
+overlay_annotation(slide_clone,
+                   rect=(368, 67, 514, 26),
+                   arrow_from=(945, 80), arrow_to=(889, 80))
+overlay_annotation(slide_clone,
+                   rect=(368, 265, 148, 26),
+                   arrow_from=(580, 278), arrow_to=(523, 278))
 
-# Slide 3: pip install
+# Slide 04: pip install
+slide_pip = OUT / "slide_04_pip.png"
 make_terminal(
     "Windows PowerShell",
     [
         ("comment", "# 2 - Install the Python package (editable mode)"),
-        ("prompt+cmd", r"PS C:\Users\hlaro\...\pinpoint-mcp>||pip install -e ."),
-        ("output",  "Obtaining file:///C:/Users/hlaro/pinpoint-install-demo/pinpoint-mcp"),
+        ("prompt+cmd", r"PS C:\Users\YOU\...\pinpoint-mcp>||pip install -e ."),
+        ("output",  "Obtaining file:///C:/Users/YOU/pinpoint-install-demo/pinpoint-mcp"),
         ("output",  "  Installing build dependencies ... done"),
         ("output",  "  Checking if build backend supports build_editable ... done"),
         ("output",  "  Getting requirements to build editable ... done"),
@@ -283,20 +295,24 @@ make_terminal(
         ("output",  "Installing collected packages: pinpoint-mcp"),
         ("success", "Successfully installed pinpoint-mcp-0.1.0"),
     ],
-    OUT / "slide_03_pip.png",
+    slide_pip,
 )
+overlay_annotation(slide_pip,
+                   rect=(16, 442, 385, 25),
+                   arrow_from=(460, 455), arrow_to=(405, 455))
 
-# Slide 4: Playwright install
+# Slide 05: Playwright install
+slide_pw = OUT / "slide_05_playwright.png"
 make_terminal(
     "Windows PowerShell",
     [
         ("comment", "# 3 - Install the Playwright Chromium browser (~170 MB)"),
-        ("prompt+cmd", r"PS C:\Users\hlaro\...\pinpoint-mcp>||playwright install chromium"),
+        ("prompt+cmd", r"PS C:\Users\YOU\...\pinpoint-mcp>||playwright install chromium"),
         ("output", "Downloading Chromium 131.0.6778.33 (playwright build v1148) from"),
         ("output", "  https://cdn.playwright.dev/builds/chromium/1148/chromium-win64.zip"),
         ("info",   "    167.2 Mb [====================] 100%  0.0s"),
         ("output", "Chromium 131.0.6778.33 (playwright build v1148) downloaded to"),
-        ("output", "  C:\\Users\\hlaro\\AppData\\Local\\ms-playwright\\chromium-1148"),
+        ("output", "  C:\\Users\\YOU\\AppData\\Local\\ms-playwright\\chromium-1148"),
         ("output", "Downloading FFMPEG playwright build v1011 from"),
         ("output", "  https://cdn.playwright.dev/builds/ffmpeg/1011/ffmpeg-win64.zip"),
         ("info",   "    2.3 Mb [====================] 100%  0.0s"),
@@ -304,10 +320,14 @@ make_terminal(
         ("blank", ""),
         ("success","\u2713  Chromium + ffmpeg ready for pinpoint_capture_url"),
     ],
-    OUT / "slide_04_playwright.png",
+    slide_pw,
 )
+overlay_annotation(slide_pw,
+                   rect=(16, 310, 470, 26),
+                   arrow_from=(555, 322), arrow_to=(490, 322))
 
-# Slide 5: Config file
+# Slide 06: Config file
+slide_cfg = OUT / "slide_06_config.png"
 make_json_viewer(
     "claude_desktop_config.json",
     '''{
@@ -323,10 +343,14 @@ make_json_viewer(
     }
   }
 }''',
-    OUT / "slide_05_config.png",
+    slide_cfg,
 )
+overlay_annotation(slide_cfg,
+                   rect=(105, 92, 555, 175),
+                   arrow_from=(730, 180), arrow_to=(665, 180))
 
-# Slide 6: Verify — simulate a pinpoint_list_monitors MCP call
+# Slide 07: Verify — simulate a pinpoint_list_monitors MCP call
+slide_verify = OUT / "slide_07_verify.png"
 make_terminal(
     "Claude Desktop - MCP call",
     [
@@ -352,7 +376,10 @@ make_terminal(
         ("blank", ""),
         ("success", "\u2713  pinpoint MCP connected. All 9 tools ready."),
     ],
-    OUT / "slide_06_verify.png",
+    slide_verify,
 )
+overlay_annotation(slide_verify,
+                   rect=(16, 486, 450, 25),
+                   arrow_from=(530, 498), arrow_to=(470, 498))
 
-print("generated 5 terminal/code slides")
+print("generated 5 terminal/code slides with dogfood annotations + username redacted")
