@@ -17,12 +17,12 @@
 ┌─────────────────────────────────────────────────────┐
 │  pinpoint-mcp                                       │
 │  ├── capture/                                       │
-│  │   ├── screen.py   → mss (Windows/Linux/macOS)   │
-│  │   └── web.py      → Playwright (CDP)            │
+│  │   ├── screen.py   -> mss (Windows/Linux/macOS)   │
+│  │   └── web.py      -> Playwright (CDP)            │
 │  ├── detect/                                        │
-│  │   └── ocr.py      → Tesseract                   │
+│  │   └── ocr.py      -> Tesseract                   │
 │  └── render/                                        │
-│      └── annotate.py → Pillow                      │
+│      └── annotate.py -> Pillow                      │
 └─────────────────────────────────────────────────────┘
 ```
 
