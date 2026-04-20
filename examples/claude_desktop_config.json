@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "clawmark": {
+      "command": "python",
+      "args": ["-m", "clawmark.server"],
+      "env": {
+        "CLAWMARK_WORKDIR": "C:\\Users\\Hubert\\Documents\\clawmark-output",
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
