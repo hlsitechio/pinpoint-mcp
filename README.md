@@ -8,46 +8,26 @@
 
 ## Demo
 
-Pinpoint annotating its **own GitHub page** — one call to `pinpoint_make_tutorial`
-produced all 4 numbered markers in under a second, full-page scroll included:
+*"Show me where to sign in on YouTube."*
 
 <p align="center">
-  <img src="docs/demo/00_combined.png" alt="Combined tutorial overview" width="720">
+  <img src="docs/demo/hero_youtube_signin.png" alt="YouTube homepage with a red box and arrow pointing at the Sign in button" width="860">
 </p>
 
-<details>
-<summary>How this was generated (one tool call)</summary>
+One call:
 
 ```python
-pinpoint_capture_url(
-    url="https://github.com/hlsitechio/pinpoint-mcp",
-    output_path="docs/demo/00_source.png",
-    full_page=True,
-)
-
-pinpoint_make_tutorial(
-    source_image="docs/demo/00_source.png",
-    output_dir="docs/demo",
-    combined=True,
-    steps=[
-        {"number": 1, "target": "pinpoint-mcp",  "caption": "The repo",       "color": "#FF1744"},
-        {"number": 2, "target": "Le problème",   "caption": "What it solves", "color": "#FFAB00"},
-        {"number": 3, "target": "Installation",  "caption": "How to install", "color": "#00C853"},
-        {"number": 4, "target": "Tools exposés", "caption": "What it can do", "color": "#2979FF"},
-    ],
+pinpoint_show_me(
+    source="https://www.youtube.com",
+    target="Sign in",
 )
 ```
 
-Each step produced its own annotated image
-([1](docs/demo/step_01_pinpoint_mcp.png) · [2](docs/demo/step_02_problem.png) ·
-[3](docs/demo/step_03_installation.png) · [4](docs/demo/step_04_tools.png)),
-plus the [combined overview](docs/demo/00_combined.png).
+Pinpoint loaded the page in headless Chromium, matched the DOM selector
+`text=Sign in`, and returned the annotated PNG above — red box + arrow on
+the exact click target, top-right of the page.
 
-Targets were found via Tesseract OCR at 92–96 % confidence in ~300 ms.
-For web content you can also use `pinpoint_show_me` with `detection_method="dom"`
-to get pixel-perfect Playwright CSS selectors instead.
-
-</details>
+**👉 Live install walkthrough: [hlsitechio.github.io/pinpoint-mcp/install.html](https://hlsitechio.github.io/pinpoint-mcp/install.html)**
 
 ## Architecture
 
@@ -71,8 +51,7 @@ to get pixel-perfect Playwright CSS selectors instead.
 
 ## Installation
 
-👉 **Visual walkthrough** : [docs/install.html](docs/install.html) — a slideshow
-of annotated screenshots taken on a real Windows 11 install.
+👉 **Visual walkthrough**: [hlsitechio.github.io/pinpoint-mcp/install.html](https://hlsitechio.github.io/pinpoint-mcp/install.html) — 6-slide HTML slideshow with annotated screenshots, hosted via GitHub Pages.
 
 ### 1. Prerequisites
 
