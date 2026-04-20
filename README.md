@@ -6,6 +6,49 @@
 
 **La solution** : Claude voit l'écran → trouve l'élément exact via OCR/DOM → te renvoie un screenshot annoté avec encadré rouge + flèche pointant l'endroit précis.
 
+## Demo
+
+Pinpoint annotating its **own GitHub page** — one call to `pinpoint_make_tutorial`
+produced all 4 numbered markers in under a second, full-page scroll included:
+
+<p align="center">
+  <img src="docs/demo/00_combined.png" alt="Combined tutorial overview" width="720">
+</p>
+
+<details>
+<summary>How this was generated (one tool call)</summary>
+
+```python
+pinpoint_capture_url(
+    url="https://github.com/hlsitechio/pinpoint-mcp",
+    output_path="docs/demo/00_source.png",
+    full_page=True,
+)
+
+pinpoint_make_tutorial(
+    source_image="docs/demo/00_source.png",
+    output_dir="docs/demo",
+    combined=True,
+    steps=[
+        {"number": 1, "target": "pinpoint-mcp",  "caption": "The repo",         "color": "#FF1744"},
+        {"number": 2, "target": "Le problème",   "caption": "What it solves",   "color": "#FFAB00"},
+        {"number": 3, "target": "Installation",  "caption": "How to install",   "color": "#00C853"},
+        {"number": 4, "target": "Tools exposés", "caption": "What it can do",   "color": "#2979FF"},
+    ],
+)
+```
+
+Each step produced its own annotated image
+([1](docs/demo/step_01_pinpoint_mcp.png) · [2](docs/demo/step_02_problem.png) ·
+[3](docs/demo/step_03_installation.png) · [4](docs/demo/step_04_tools.png)),
+plus the [combined overview](docs/demo/00_combined.png).
+
+Targets were found via Tesseract OCR at 92–96 % confidence in ~300 ms.
+For web content you can also use `pinpoint_show_me` with `detection_method="dom"`
+to get pixel-perfect Playwright CSS selectors instead.
+
+</details>
+
 ## Architecture
 
 ```
