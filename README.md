@@ -2,9 +2,9 @@
 
 > MCP server for screenshot capture + intelligent visual annotation. Built for Claude Desktop, Claude Code, and any MCP-compatible client.
 
-**Le problème** : Claude voit un écran et te dit *"clique sur le bouton en haut à droite, près de l'icône engrenage..."* en mots. Tu cherches, tu perds 30 secondes, parfois tu cliques au mauvais endroit.
+**The problem.** Claude sees a screen and tells you *"click the button in the top-right, near the gear icon..."* in words. You hunt for it, lose 30 seconds, sometimes click the wrong thing.
 
-**La solution** : Claude voit l'écran → trouve l'élément exact via OCR/DOM → te renvoie un screenshot annoté avec encadré rouge + flèche pointant l'endroit précis.
+**The fix.** Claude sees the screen → finds the exact element via OCR or DOM → returns an annotated screenshot with a red box + arrow pointing at the precise spot.
 
 ## Demo
 
@@ -30,10 +30,10 @@ pinpoint_make_tutorial(
     output_dir="docs/demo",
     combined=True,
     steps=[
-        {"number": 1, "target": "pinpoint-mcp",  "caption": "The repo",         "color": "#FF1744"},
-        {"number": 2, "target": "Le problème",   "caption": "What it solves",   "color": "#FFAB00"},
-        {"number": 3, "target": "Installation",  "caption": "How to install",   "color": "#00C853"},
-        {"number": 4, "target": "Tools exposés", "caption": "What it can do",   "color": "#2979FF"},
+        {"number": 1, "target": "pinpoint-mcp",  "caption": "The repo",       "color": "#FF1744"},
+        {"number": 2, "target": "Le problème",   "caption": "What it solves", "color": "#FFAB00"},
+        {"number": 3, "target": "Installation",  "caption": "How to install", "color": "#00C853"},
+        {"number": 4, "target": "Tools exposés", "caption": "What it can do", "color": "#2979FF"},
     ],
 )
 ```
@@ -53,7 +53,7 @@ to get pixel-perfect Playwright CSS selectors instead.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Claude (Desktop / Code / OpenClaw)                 │
+│  Claude (Desktop / Code / any MCP client)           │
 └──────────────────────┬──────────────────────────────┘
                        │ MCP stdio
                        ▼
@@ -71,32 +71,35 @@ to get pixel-perfect Playwright CSS selectors instead.
 
 ## Installation
 
-### 1. Prérequis
+👉 **Visual walkthrough** : [docs/install.html](docs/install.html) — a slideshow
+of annotated screenshots taken on a real Windows 11 install.
+
+### 1. Prerequisites
 
 - Python 3.11+
 - Tesseract OCR
-  - **Windows** : [installer depuis UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki) (inclure French language pack)
-  - **Kali/Debian** : `sudo apt install tesseract-ocr tesseract-ocr-fra`
+  - **Windows** : [install from UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki) (include the language packs you need)
+  - **Debian/Kali** : `sudo apt install tesseract-ocr tesseract-ocr-eng`
   - **macOS** : `brew install tesseract tesseract-lang`
 
-### 2. Installation du package
+### 2. Install the package
 
 ```powershell
-# Windows (recommandé : utiliser uv)
-uv pip install -e .
-playwright install chromium
-```
-
-```bash
-# Linux/macOS
+# Windows
 pip install -e .
 playwright install chromium
 ```
 
-### 3. Configuration Claude Desktop
+```bash
+# Linux / macOS
+pip install -e .
+playwright install chromium
+```
 
-Édite `%APPDATA%\Claude\claude_desktop_config.json` (Windows) ou
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) :
+### 3. Configure Claude Desktop
+
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
 
 ```json
 {
@@ -105,69 +108,70 @@ playwright install chromium
       "command": "python",
       "args": ["-m", "pinpoint.server"],
       "env": {
-        "PINPOINT_WORKDIR": "C:\\Users\\Hubert\\pinpoint-output"
+        "PINPOINT_WORKDIR": "C:\\Users\\YOU\\pinpoint-output"
       }
     }
   }
 }
 ```
 
-Redémarre Claude Desktop. Le serveur apparaît dans la liste des MCP.
+Restart Claude Desktop. The server appears in the MCP panel.
 
-## Tools exposés
+## Exposed tools
 
 | Tool | Description |
 |------|-------------|
-| `pinpoint_list_monitors` | Liste les écrans disponibles |
-| `pinpoint_capture_screen` | Screenshot écran complet |
-| `pinpoint_capture_active_window` | Screenshot fenêtre active (Windows) |
-| `pinpoint_capture_url` | Screenshot d'une page web |
-| `pinpoint_find_text` | Trouve du texte par OCR |
-| `pinpoint_find_web_element` | Trouve un élément DOM (sélecteurs Playwright) |
-| `pinpoint_annotate` | Applique encadrés/flèches/numéros |
-| `pinpoint_show_me` | **★ Workflow complet en 1 call** |
+| `pinpoint_list_monitors` | List available displays |
+| `pinpoint_capture_screen` | Full-screen screenshot (per monitor) |
+| `pinpoint_capture_active_window` | Screenshot of the active window (Windows) |
+| `pinpoint_capture_url` | Screenshot of a web page (Playwright) |
+| `pinpoint_find_text` | Locate text via Tesseract OCR |
+| `pinpoint_find_web_element` | Locate a DOM element via Playwright selectors |
+| `pinpoint_annotate` | Draw rectangles / arrows / numbered steps / highlights / blurs |
+| `pinpoint_show_me` | **★ One-call workflow: capture + detect + annotate** |
+| `pinpoint_make_tutorial` | Multi-step annotated walkthrough from a single source image |
 
-## Exemple d'utilisation avec Claude
+## Example usage with Claude
 
-> **Toi** : "Voici un screenshot de l'admin Shopify, montre-moi où cliquer pour approuver les scopes"
+> **You**: *"Here's a screenshot of the Shopify admin — show me where to click to approve the scopes."*
 
-> **Claude** :
+> **Claude**:
 > ```
-> [appelle pinpoint_show_me(target="Approve scopes",
->                           source="C:/screenshots/shopify.png")]
+> [calls pinpoint_show_me(target="Approve scopes",
+>                         source="C:/screenshots/shopify.png")]
 > ```
-> Voici l'image annotée — le bouton à cliquer est encadré en rouge.
+> Here's the annotated image — the button to click is boxed in red.
 
-## Variables d'environnement
+## Environment variables
 
-| Variable | Défaut | Description |
-|----------|--------|-------------|
-| `PINPOINT_WORKDIR` | `%TEMP%/pinpoint` | Dossier de sortie des PNG |
-| `PINPOINT_TRANSPORT` | `stdio` | `stdio` ou `http` |
-| `PINPOINT_PORT` | `8765` | Port HTTP si transport=http |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PINPOINT_WORKDIR` | `%TEMP%/pinpoint` | Output directory for generated PNGs |
+| `PINPOINT_TRANSPORT` | `stdio` | `stdio` or `http` |
+| `PINPOINT_PORT` | `8765` | HTTP port when transport=http |
 
-## Tests rapides
+## Quick tests
 
 ```bash
-# Vérifier que Tesseract trouve "Approve scopes" dans une image
+# Check that Tesseract finds a target string in an image
 python -c "from pinpoint.detect.ocr import OCRDetector; \
            print(OCRDetector().find_text('test.png', 'Approve scopes'))"
 
-# Lister les écrans
+# List available monitors
 python -c "from pinpoint.capture.screen import ScreenCapture; \
            [print(m.label) for m in ScreenCapture().list_monitors()]"
 ```
 
 ## Roadmap
 
-- [ ] OCR : support de zones de recherche (chercher uniquement dans une région)
-- [ ] DOM : sélecteurs sémantiques avancés (ARIA tree introspection)
-- [ ] Mode "tutoriel" : génère N images annotées pour un workflow multi-étapes
-- [ ] Intégration vision Claude API en fallback quand OCR rate
-- [ ] Support des fenêtres Citrix/RDP (capture spécifique au handle de fenêtre)
+- [ ] OCR: region-scoped search (search only inside a rectangle of the image)
+- [ ] DOM: richer semantic selectors (ARIA tree introspection)
+- [ ] Vision fallback via Claude API when OCR misses
+- [ ] Citrix / RDP window support (capture by window handle)
+- [ ] Animated GIF output for `pinpoint_make_tutorial`
 
-## Licence
+## License
 
-MIT — fais ce que tu veux avec.
+MIT — do whatever you want with it.
 
-Construit par [Hubert (rainkode)](https://crowbyte.io) pour HLSI Tech.
+Built by [Hubert (rainkode)](https://crowbyte.io) for HLSI Tech.

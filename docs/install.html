@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pinpoint-mcp — Install walkthrough</title>
+<style>
+  :root {
+    --bg: #0f1018;
+    --panel: #1a1b26;
+    --border: #2a2d3e;
+    --text: #c0caf5;
+    --muted: #565a7d;
+    --accent: #bb9af7;
+    --success: #9ece6a;
+    --danger: #f7768e;
+    --fonts-mono: "Cascadia Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+    --fonts-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--fonts-ui);
+    min-height: 100vh;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  .hero {
+    text-align: center;
+    margin-bottom: 18px;
+    max-width: 1280px;
+  }
+  .hero h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+  .hero h1 .brand { color: var(--accent); }
+  .hero p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .stage {
+    position: relative;
+    width: min(100%, 1280px);
+    aspect-ratio: 1280 / 760;
+    background: var(--panel);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 22px 60px -20px rgba(0,0,0,0.8);
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 280ms ease;
+    pointer-events: none;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(15, 16, 24, 0.85);
+    backdrop-filter: blur(6px);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  .caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 28px 24px;
+    background: linear-gradient(to top, rgba(15,16,24,0.95) 0%, rgba(15,16,24,0.55) 60%, rgba(15,16,24,0) 100%);
+    color: #fff;
+  }
+  .caption h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .caption p {
+    margin: 0;
+    color: #b7bed3;
+    font-size: 14px;
+    max-width: 880px;
+  }
+  .caption code {
+    font-family: var(--fonts-mono);
+    background: rgba(187, 154, 247, 0.15);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* Controls */
+  .controls {
+    width: min(100%, 1280px);
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 18px;
+  }
+  .nav-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: var(--fonts-ui);
+    transition: all 150ms ease;
+    min-width: 110px;
+  }
+  .nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .progress {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .dot {
+    height: 6px;
+    flex: 1;
+    max-width: 120px;
+    background: var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+  .dot.active { background: var(--accent); }
+  .dot:hover { background: var(--muted); }
+
+  .counter {
+    font-family: var(--fonts-mono);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .counter b { color: var(--text); }
+
+  .shortcuts {
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    max-width: 640px;
+  }
+  .shortcuts kbd {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: var(--fonts-mono);
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  @media (max-width: 720px) {
+    .hero h1 { font-size: 18px; }
+    .caption { padding: 14px 18px 16px; }
+    .caption h2 { font-size: 16px; }
+    .caption p { font-size: 12px; }
+    .nav-btn { min-width: 80px; padding: 8px 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1><span class="brand">pinpoint-mcp</span> · Install walkthrough</h1>
+    <p>Six screens, zero guesswork — from Tesseract download to Claude Desktop confirming the server is live.</p>
+  </div>
+
+  <div class="stage" id="stage">
+    <!-- Slide 1 -->
+    <div class="slide active" data-step="1">
+      <img src="install/slide_01_tesseract.png" alt="Tesseract installer page with the Windows 64-bit download highlighted">
+      <span class="badge">Prerequisite</span>
+      <div class="caption">
+        <h2>1. Install Tesseract OCR</h2>
+        <p>Grab the 64-bit Windows installer from <code>github.com/UB-Mannheim/tesseract</code>. Add it to <code>PATH</code> during setup, or point <code>TESSDATA_PREFIX</code> at a user-writable <code>tessdata</code> folder that already contains the language packs you need.</p>
+      </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide" data-step="2">
+      <img src="install/slide_02_clone.png" alt="PowerShell cloning the pinpoint-mcp repository">
+      <span class="badge">Step 1 · Clone</span>
+      <div class="caption">
+        <h2>2. Clone the repository</h2>
+        <p><code>git clone https://github.com/hlsitechio/pinpoint-mcp.git</code> then <code>cd</code> into the checkout. ~35 objects, ~13 KiB — takes under a second on any connection.</p>
+      </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide" data-step="3">
+      <img src="install/slide_03_pip.png" alt="pip install -e output ending in Successfully installed pinpoint-mcp-0.1.0">
+      <span class="badge">Step 2 · Install</span>
+      <div class="caption">
+        <h2>3. Install the package (editable)</h2>
+        <p><code>pip install -e .</code> pulls FastMCP, Pillow, mss, Playwright, pytesseract and pydantic — then registers <code>pinpoint-mcp</code> as an editable wheel so source edits reload without reinstalling.</p>
+      </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide" data-step="4">
+      <img src="install/slide_04_playwright.png" alt="playwright install chromium downloading ~170 MB">
+      <span class="badge">Step 3 · Browser</span>
+      <div class="caption">
+        <h2>4. Install the Playwright browser</h2>
+        <p><code>playwright install chromium</code> fetches a self-contained Chromium build and the bundled <code>ffmpeg</code>. Required for <code>pinpoint_capture_url</code> and the DOM-based <code>pinpoint_find_web_element</code>.</p>
+      </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide" data-step="5">
+      <img src="install/slide_05_config.png" alt="claude_desktop_config.json showing the pinpoint MCP server entry">
+      <span class="badge">Step 4 · Configure</span>
+      <div class="caption">
+        <h2>5. Register the MCP server</h2>
+        <p>Add a <code>pinpoint</code> entry to <code>%APPDATA%\Claude\claude_desktop_config.json</code> pointing at <code>python -m pinpoint.server</code>. Set <code>TESSDATA_PREFIX</code> + <code>PATH</code> so Tesseract and its language packs are reachable from the spawned subprocess.</p>
+      </div>
+    </div>
+
+    <!-- Slide 6 -->
+    <div class="slide" data-step="6">
+      <img src="install/slide_06_verify.png" alt="Claude Desktop successfully calling pinpoint_list_monitors">
+      <span class="badge">Done</span>
+      <div class="caption">
+        <h2>6. Verify in Claude Desktop</h2>
+        <p>Fully quit Claude Desktop (tray icon → Quit), then relaunch. Ask Claude to call <code>pinpoint_list_monitors</code> — a successful JSON response like the one above means all 9 <code>pinpoint_*</code> tools are wired up and ready.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prev">‹ Prev</button>
+    <div class="progress" id="progress"></div>
+    <button class="nav-btn" id="next">Next ›</button>
+  </div>
+
+  <div class="counter">
+    Slide <b id="current">1</b> of <b id="total">6</b>
+  </div>
+
+  <div class="shortcuts">
+    <kbd>←</kbd> / <kbd>→</kbd> to navigate · <kbd>Home</kbd> / <kbd>End</kbd> to jump · <kbd>Space</kbd> to advance
+  </div>
+
+<script>
+(function () {
+  const slides = document.querySelectorAll('.slide');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const progress = document.getElementById('progress');
+  const current = document.getElementById('current');
+  const total = document.getElementById('total');
+  total.textContent = slides.length;
+
+  // Build dots
+  for (let i = 0; i < slides.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.dataset.index = i;
+    dot.title = 'Slide ' + (i + 1);
+    progress.appendChild(dot);
+  }
+  const dots = progress.querySelectorAll('.dot');
+
+  let idx = 0;
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, n) => s.classList.toggle('active', n === idx));
+    dots.forEach((d, n) => d.classList.toggle('active', n === idx));
+    current.textContent = idx + 1;
+    prev.disabled = idx === 0;
+    next.disabled = idx === slides.length - 1;
+  }
+
+  prev.addEventListener('click', () => show(idx - 1));
+  next.addEventListener('click', () => show(idx + 1));
+  dots.forEach(d => d.addEventListener('click', () => show(+d.dataset.index)));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') show(idx - 1);
+    else if (e.key === 'ArrowRight' || e.key === ' ') { show(idx + 1); e.preventDefault(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+
+  // Preload neighbors
+  function preload() {
+    [idx + 1, idx - 1].forEach(n => {
+      if (n >= 0 && n < slides.length) {
+        const img = slides[n].querySelector('img');
+        if (img && !img.complete) img.loading = 'eager';
+      }
+    });
+  }
+  preload();
+  show(0);
+})();
+</script>
+</body>
+</html>
