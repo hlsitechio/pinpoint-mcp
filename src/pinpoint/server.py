@@ -30,6 +30,7 @@ from pinpoint.capture.screen import ScreenCapture
 from pinpoint.capture.web import WebCapture
 from pinpoint.detect.ocr import OCRDetector
 from pinpoint.detect.icons import IconDetector
+from pinpoint.detect.elements import ElementDetector, ElementMatch
 from pinpoint.render.annotate import annotate as render_annotate
 from pinpoint.render.tutorial import TutorialBuilder, TutorialStep
 
@@ -558,29 +559,37 @@ def pinpoint_fetch_favicon(
 def pinpoint_find_icon(
     image_path: str,
     template_path: str,
-    threshold: float = 0.72,
-    max_matches: int = 20,
+    threshold: float = 0.55,
+    max_matches: int = 10,
+    confidence_gap: float = 0.12,
 ) -> str:
     """Find visual icon occurrences (template matching, not OCR).
 
     Uses multi-scale template matching + non-maximum suppression so one
     reference icon catches favicon-size AND bigger app-shortcut copies in
-    the same screenshot.
+    the same screenshot. Auto-skips mask mode for opaque templates
+    (~50x faster via FFT path).
 
     Args:
         image_path: screenshot to search in.
         template_path: reference icon PNG (e.g. a fetched favicon).
-        threshold: minimum correlation score 0-1. 0.72 works for most
-            clean UI icons; drop to 0.6 for noisy / anti-aliased targets.
+        threshold: minimum correlation score 0-1. 0.55 is permissive —
+            returns everything that vaguely resembles the template so the
+            gap filter can compare them.
         max_matches: cap on how many hits to return.
+        confidence_gap: drop any match scoring more than this below the
+            best hit. 0.12 kills typical false positives while keeping
+            legitimate duplicate icons. Set to 0 to return every hit.
 
     Returns JSON list of bboxes with confidence + scale each match was
-    found at.
+    found at, sorted by confidence descending.
     """
     src = _resolve_input_path(image_path)
     tpl = _resolve_input_path(template_path)
 
-    hits = IconDetector(threshold=threshold).find(src, tpl, max_matches=max_matches)
+    hits = IconDetector(threshold=threshold).find(
+        src, tpl, max_matches=max_matches, confidence_gap=confidence_gap,
+    )
     return json.dumps([
         {
             "x": m.x, "y": m.y, "w": m.width, "h": m.height,
@@ -588,6 +597,72 @@ def pinpoint_find_icon(
             "center": list(m.center),
         }
         for m in hits
+    ], indent=2)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UI Automation element detection
+#   "what OCR is for text, UIA is for interactive UI"
+# ─────────────────────────────────────────────────────────────────────────────
+
+@mcp.tool
+def pinpoint_find_element(
+    query: str,
+    control_types: Optional[list[str]] = None,
+    case_sensitive: bool = False,
+    visible_only: bool = True,
+    exact: bool = False,
+    root_window_name: Optional[str] = None,
+    max_matches: int = 30,
+) -> str:
+    """Find every UI element on the desktop whose name matches ``query``.
+
+    Uses Windows UI Automation (the same API screen readers use). Each hit
+    has a pixel-accurate bounding rectangle — feed these straight into
+    pinpoint_point_live to paint red boxes on the real desktop.
+
+    Args:
+        query: substring of the element's accessible Name.
+        control_types: restrict to these UIA types, e.g.
+            ["ButtonControl","ImageControl","HyperlinkControl","ListItemControl"].
+            None = any.
+        case_sensitive: default False.
+        visible_only: skip offscreen nodes (default True for the
+            "point at something I can see right now" workflow).
+        exact: require full Name equality instead of substring.
+        root_window_name: if you know the app (e.g. "Google Chrome"),
+            start the walk there - orders of magnitude faster than
+            scanning the whole desktop.
+        max_matches: cap on returned hits.
+
+    Returns JSON list of {name, control_type, x, y, w, h, center,
+    automation_id, class_name, is_offscreen, is_enabled, depth}.
+    """
+    if sys.platform != "win32":
+        return json.dumps({"error": "UIA element detection is Windows-only"})
+
+    detector = ElementDetector()
+    hits = detector.find(
+        query=query,
+        control_types=control_types,
+        case_sensitive=case_sensitive,
+        visible_only=visible_only,
+        exact=exact,
+        root_window_name=root_window_name,
+    )
+    return json.dumps([
+        {
+            "name": m.name,
+            "control_type": m.control_type,
+            "x": m.x, "y": m.y, "w": m.width, "h": m.height,
+            "center": list(m.center),
+            "automation_id": m.automation_id,
+            "class_name": m.class_name,
+            "is_offscreen": m.is_offscreen,
+            "is_enabled": m.is_enabled,
+            "depth": m.depth,
+        }
+        for m in hits[:max_matches]
     ], indent=2)
 
 

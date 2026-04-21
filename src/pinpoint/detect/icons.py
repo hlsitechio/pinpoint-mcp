@@ -86,16 +86,34 @@ class IconDetector:
         image_path: str | Path,
         template_path: str | Path,
         max_matches: int = 20,
+        confidence_gap: float = 0.12,
     ) -> list[IconMatch]:
         """Return up to ``max_matches`` hits of ``template_path`` inside
         ``image_path``, sorted by confidence descending.
 
+        Args:
+            max_matches: hard cap on returned hits.
+            confidence_gap: if a match scores more than ``confidence_gap``
+                below the best hit, it's treated as noise and dropped.
+                Typical clean logo: best=0.91, false positives cap at
+                0.77 — a gap of 0.14 kills all the noise. Set to 0 to
+                disable and get every hit above threshold.
+
         Strategy: colour template matching (BGR) with the template's alpha
-        channel as a mask, so transparent icon surrounds don't correlate
-        against whatever background the icon is sitting on in the screen.
+        channel as a mask when mostly-transparent; otherwise the fast FFT
+        path (TM_CCOEFF_NORMED). Multi-scale sweep + NMS.
         """
         src = _load_bgr(image_path)
         tpl_bgr, tpl_mask = _load_bgr_and_mask(template_path)
+
+        # Masked matchTemplate in OpenCV is ~10-50x slower than unmasked
+        # because it falls back to a sum-of-squared-differences algorithm.
+        # If the template is essentially fully opaque (>95 % of pixels),
+        # the mask buys us nothing — drop it and use the fast FFT path.
+        if tpl_mask is not None:
+            opaque_frac = float((tpl_mask > 0).sum()) / tpl_mask.size
+            if opaque_frac >= 0.95:
+                tpl_mask = None
 
         raw: list[IconMatch] = []
         src_h, src_w = src.shape[:2]
@@ -122,9 +140,12 @@ class IconDetector:
             if tpl_mask is not None:
                 mask_s = cv2.resize(tpl_mask, (tw, th), interpolation=cv2.INTER_NEAREST)
 
-            # TM_CCORR_NORMED is the method OpenCV documents as supporting masks.
-            result = cv2.matchTemplate(src, tpl_s, cv2.TM_CCORR_NORMED, mask=mask_s)
-            # matchTemplate can produce NaN where the mask sums to 0 at a position.
+            # Fast path: no mask -> TM_CCOEFF_NORMED uses an FFT and is
+            # orders of magnitude faster than masked TM_CCORR_NORMED.
+            if mask_s is None:
+                result = cv2.matchTemplate(src, tpl_s, cv2.TM_CCOEFF_NORMED)
+            else:
+                result = cv2.matchTemplate(src, tpl_s, cv2.TM_CCORR_NORMED, mask=mask_s)
             result = np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
             ys, xs = np.where(result >= self.threshold)
             for y, x in zip(ys, xs):
@@ -138,6 +159,15 @@ class IconDetector:
         # NMS across all scales.
         merged = _nms(raw, self.nms_iou)
         merged.sort(key=lambda m: m.confidence, reverse=True)
+
+        # Gap-based noise trim: once we're more than `confidence_gap` below
+        # the best hit, stop — subsequent matches are almost certainly
+        # unrelated things that happen to share some colour / shape.
+        if merged and confidence_gap > 0:
+            top = merged[0].confidence
+            cutoff = top - confidence_gap
+            merged = [m for m in merged if m.confidence >= cutoff]
+
         return merged[:max_matches]
 
     # Convenience: find at most one hit (best across all scales).
