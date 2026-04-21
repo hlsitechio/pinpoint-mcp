@@ -8,6 +8,9 @@ Tools exposés :
     - pinpoint_find_web_element : trouve un élément DOM dans une URL (sélecteurs)
     - pinpoint_annotate : applique encadrés/flèches/numéros sur une image
     - pinpoint_show_me : workflow complet (capture + détection + annotation)
+    - pinpoint_point_live : draw on the REAL desktop via the overlay daemon
+    - pinpoint_show_me_live : capture + detect + draw on the real desktop
+    - pinpoint_clear_live : wipe all live overlays
 """
 
 from __future__ import annotations
@@ -16,6 +19,8 @@ import json
 import os
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Optional
 
@@ -505,6 +510,153 @@ def pinpoint_make_tutorial(
     return json.dumps(response, indent=2)
 
 
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Live overlay tools (drive the pinpoint-overlay daemon on the user's desktop)
+# ─────────────────────────────────────────────────────────────────────────────
+
+OVERLAY_BASE_URL = os.environ.get("PINPOINT_OVERLAY_URL", "http://127.0.0.1:8766")
+_OVERLAY_HINT = (
+    "Overlay daemon not reachable. Start it once with: "
+    "`python -m pinpoint.overlay.daemon` (or `pinpoint-overlay`). "
+    "It runs a transparent click-through window and listens on "
+    f"{OVERLAY_BASE_URL}."
+)
+
+
+def _overlay_post(endpoint: str, payload: dict, timeout: float = 2.0) -> dict:
+    """POST JSON to the local overlay daemon. Returns parsed JSON or {error}."""
+    url = f"{OVERLAY_BASE_URL}{endpoint}"
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=body, method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.URLError as e:
+        return {"error": f"overlay_unreachable: {e.reason}", "hint": _OVERLAY_HINT}
+    except Exception as e:
+        return {"error": f"overlay_error: {e.__class__.__name__}: {e}",
+                "hint": _OVERLAY_HINT}
+
+
+@mcp.tool
+def pinpoint_point_live(
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    ttl_ms: int = 4000,
+    color: str = "#FF1744",
+    label: Optional[str] = None,
+) -> str:
+    """Draw a red box (optional label) directly on the user's REAL desktop.
+
+    Annotation appears on top of all windows, is click-through, and auto-fades
+    after ``ttl_ms`` milliseconds. Requires the pinpoint-overlay daemon to be
+    running (``python -m pinpoint.overlay.daemon``).
+
+    Coordinates are in primary-monitor screen pixels. Use with output of
+    pinpoint_find_text / pinpoint_find_web_element for "point at this on my
+    real screen" workflows.
+    """
+    return json.dumps(_overlay_post("/point", {
+        "x": int(x), "y": int(y), "w": int(w), "h": int(h),
+        "ttl_ms": int(ttl_ms), "color": color, "label": label,
+    }))
+
+
+@mcp.tool
+def pinpoint_arrow_live(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    ttl_ms: int = 4000,
+    color: str = "#FF1744",
+) -> str:
+    """Draw a red arrow from (x1,y1) to (x2,y2) on the real desktop."""
+    return json.dumps(_overlay_post("/arrow", {
+        "x1": int(x1), "y1": int(y1), "x2": int(x2), "y2": int(y2),
+        "ttl_ms": int(ttl_ms), "color": color,
+    }))
+
+
+@mcp.tool
+def pinpoint_clear_live() -> str:
+    """Wipe every active live annotation from the real desktop."""
+    return json.dumps(_overlay_post("/clear", {}))
+
+
+@mcp.tool
+def pinpoint_show_me_live(
+    target: str,
+    source: str = "screen",
+    monitor_index: int = 1,
+    ttl_ms: int = 4500,
+    color: str = "#FF1744",
+    min_confidence: float = 55.0,
+    draw_arrow: bool = True,
+) -> str:
+    """One-call live workflow: capture the screen, find ``target`` via OCR,
+    and draw a red box + arrow on the user's REAL desktop (no PNG returned).
+
+    Args:
+        target: text to locate on screen (OCR match).
+        source: "screen" for live capture, or a path to an existing image.
+        monitor_index: 1 = primary on multi-monitor setups (see list_monitors).
+        ttl_ms: how long annotations stay visible before fading.
+        color: hex or CSS colour.
+        min_confidence: OCR confidence floor, 0-100.
+        draw_arrow: also draw an arrow pointing at the target.
+
+    Returns JSON with the bbox that was found + the overlay daemon's ack.
+    """
+    if source == "screen":
+        src = _next_output_path(prefix="live_src")
+        ScreenCapture().capture_full(str(src), monitor_index=monitor_index)
+    else:
+        src = Path(source)
+        if not src.exists():
+            return json.dumps({"error": f"source not found: {source}"})
+
+    matches = OCRDetector(min_confidence=min_confidence).find_text(src, target)
+    if not matches:
+        return json.dumps({
+            "error": f"target not found on screen: {target!r}",
+            "hint": "Check spelling, or lower min_confidence (try 40).",
+            "capture": str(src),
+        })
+
+    best = max(matches, key=lambda m: m.confidence)
+    rect_result = _overlay_post("/point", {
+        "x": best.x, "y": best.y, "w": best.width, "h": best.height,
+        "ttl_ms": int(ttl_ms), "color": color,
+    })
+
+    arrow_result = None
+    if draw_arrow:
+        # Arrow comes in from 80 px to the right of the match, points left.
+        arrow_result = _overlay_post("/arrow", {
+            "x1": best.x + best.width + 90,
+            "y1": best.y + best.height // 2,
+            "x2": best.x + best.width + 10,
+            "y2": best.y + best.height // 2,
+            "ttl_ms": int(ttl_ms), "color": color,
+        })
+
+    return json.dumps({
+        "found": True,
+        "target": target,
+        "bbox": {"x": best.x, "y": best.y,
+                 "w": best.width, "h": best.height,
+                 "confidence": best.confidence},
+        "overlay": rect_result,
+        "arrow": arrow_result,
+    }, indent=2)
 
 
 def main():

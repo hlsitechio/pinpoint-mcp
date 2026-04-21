@@ -25,6 +25,7 @@ dev = [
 
 [project.scripts]
 pinpoint-mcp = "pinpoint.server:main"
+pinpoint-overlay = "pinpoint.overlay.daemon:main"
 
 [build-system]
 requires = ["hatchling"]
