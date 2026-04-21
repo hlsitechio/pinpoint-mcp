@@ -29,6 +29,7 @@ from fastmcp import FastMCP
 from pinpoint.capture.screen import ScreenCapture
 from pinpoint.capture.web import WebCapture
 from pinpoint.detect.ocr import OCRDetector
+from pinpoint.detect.icons import IconDetector
 from pinpoint.render.annotate import annotate as render_annotate
 from pinpoint.render.tutorial import TutorialBuilder, TutorialStep
 
@@ -510,6 +511,84 @@ def pinpoint_make_tutorial(
     return json.dumps(response, indent=2)
 
 
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Icon detection (finds visual icons — Google G, GitHub octocat, etc.)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@mcp.tool
+def pinpoint_fetch_favicon(
+    domain: str,
+    size: int = 128,
+    output_path: Optional[str] = None,
+) -> str:
+    """Download a high-res icon for a domain via Google's favicon service.
+
+    Args:
+        domain: "google.com", "github.com", "discord.com", etc.
+        size: requested px (64/128/256 all honoured by the service).
+        output_path: where to save. Default: WORKDIR/<domain>_<size>.png
+
+    Returns a JSON object with the saved path so you can feed it straight
+    into pinpoint_find_icon.
+    """
+    import urllib.request as _ur
+    dom = domain.replace("https://", "").replace("http://", "").split("/")[0]
+    url = f"https://www.google.com/s2/favicons?domain={dom}&sz={size}"
+    if output_path:
+        out = Path(output_path)
+    else:
+        out = WORKDIR / f"favicon_{dom.replace('.', '_')}_{size}.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with _ur.urlopen(url, timeout=10) as r:
+            out.write_bytes(r.read())
+    except Exception as e:
+        return json.dumps({"error": f"fetch failed: {e}", "url": url})
+    return json.dumps({
+        "domain": dom,
+        "url": url,
+        "saved_to": str(out),
+        "size_bytes": out.stat().st_size,
+    })
+
+
+@mcp.tool
+def pinpoint_find_icon(
+    image_path: str,
+    template_path: str,
+    threshold: float = 0.72,
+    max_matches: int = 20,
+) -> str:
+    """Find visual icon occurrences (template matching, not OCR).
+
+    Uses multi-scale template matching + non-maximum suppression so one
+    reference icon catches favicon-size AND bigger app-shortcut copies in
+    the same screenshot.
+
+    Args:
+        image_path: screenshot to search in.
+        template_path: reference icon PNG (e.g. a fetched favicon).
+        threshold: minimum correlation score 0-1. 0.72 works for most
+            clean UI icons; drop to 0.6 for noisy / anti-aliased targets.
+        max_matches: cap on how many hits to return.
+
+    Returns JSON list of bboxes with confidence + scale each match was
+    found at.
+    """
+    src = _resolve_input_path(image_path)
+    tpl = _resolve_input_path(template_path)
+
+    hits = IconDetector(threshold=threshold).find(src, tpl, max_matches=max_matches)
+    return json.dumps([
+        {
+            "x": m.x, "y": m.y, "w": m.width, "h": m.height,
+            "confidence": round(m.confidence, 3), "scale": m.scale,
+            "center": list(m.center),
+        }
+        for m in hits
+    ], indent=2)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
